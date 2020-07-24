@@ -1,0 +1,88 @@
+version: '3.7'
+
+## PLEASE provide values for relevant environment variables (e.g, GIT_USER) in an accompanying .env file
+## the .env file will not be checked in to version control
+
+services:
+  db:
+    image: "mariadb:${MARIADBVERSION:-10.4}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
+      TZ: "${TZ:-Europe/London}"
+    stdin_open: true
+    tty: true
+    volumes:
+      - "oe-db:/var/lib/mysql"
+    command:
+      # Changing log_file_size to allow lightning image processing of larger document image events
+      - "--innodb_log_file_size"
+      - "128M"
+    networks:
+    # - public
+    - private
+
+  web:
+    image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-php7}"
+    hostname: "{{.Task.Name}}_{{.Task.Slot}}"
+    environment:
+      GIT_USER: ${GIT_USER:-}
+      TZ: "${TZ:-Europe/London}"
+      UID: '1'
+      GID: '1'
+      OE_MODE: '${OE_MODE:-DEV}'
+      OE_INSTITUTION_CODE: '${OE_INSTITUTION_CODE:-NEW}'
+      OE_PORTAL_URI: ${OE_PORTAL_URI:-}
+      OE_PORTAL_EXTERNAL_URI: ${OE_PORTAL_EXTERNAL_URI:-}
+      OE_PORTAL_USERNAME: ${OE_PORTAL_USERNAME:-}
+      OE_PORTAL_PASSWORD: ${OE_PORTAL_PASSWORD:-}
+      OE_PORTAL_CLIENT_ID: ${OE_PORTAL_USERNAME:-}
+      OE_PORTAL_CLIENT_SECRET: ${OE_PORTAL_CLIENT_SECRET:-}
+      OE_PORTAL_ENABLED: "${OE_PORTAL_ENABLED:-FALSE}"
+      SSH_SERVER_ENABLE: "${SSH_SERVER_ENABLE:-FALSE}"
+      DATABASE_HOST: "db"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
+      ENABLE_CRON: "${ENABLE_CRON:-TRUE}"
+      WAIT_HOSTS_TIMEOUT: "120"
+      WAIT_SLEEP_INTERVAL: "2"
+      BUILD_BRANCH: '${BUILD_BRANCH:-develop}'
+      OE_TECH_SUPPORT_PROVIDER: '${OE_TECH_SUPPORT_PROVIDER:-Toukan Labs}'
+      OE_TECH_SUPPORT_URL: '${OE_TECH_SUPPORT_URL:-https://toukanlabs.com}'
+      OE_SIGNATURE_APP_URL: ${OE_SIGNATURE_APP_URL:-}
+      OE_DOCMAN_EXPORT_DIRECTORY: ${OE_DOCMAN_EXPORT_DIRECTORY:-}
+      RESET_DB_CRON: ${RESET_DB_CRON:-}
+      USE_DEMO_DATA: ${USE_DEMO_DATA:-TRUE}
+      TRACK_NEW_GIT_COMMITS: ${TRACK_NEW_GIT_COMMITS:-FALSE}
+    deploy:
+      labels: 
+        - traefik.enable=true
+        - traefik.http.services.${URL_HOST}.loadbalancer.server.port=80          
+        - traefik.http.routers.${URL_HOST}.rule=Host(`portainer.${DOMAINNAME}`)
+        - traefik.http.routers.${URL_HOST}.entrypoints=websecure
+        - traefik.http.routers.${URL_HOST}.tls=true
+        - traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver
+    networks:
+      - proxy
+      - private
+    secrets:
+      - source: ssh_deploy_key
+        target: SSH_PRIVATE_KEY
+    stdin_open: true
+    tty: true
+    volumes:
+      - "oe-web:/var/www/openeyes"
+    depends_on:
+     - "db"
+
+networks:
+  private:
+  proxy:
+    external: true
+
+
+volumes:
+  oe-web:
+  oe-db:
+
+secrets:
+  ssh_deploy_key:
+    external: true
