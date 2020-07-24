@@ -1,0 +1,239 @@
+version: '3.7'
+
+## !!!!!!! login to docker first. If using stack deploy, include --with-registry-auth !!!!!!!!
+
+services:
+  db:
+    image: "mariadb:${MARIADBVERSION:-10.4}"
+    environment:
+      MYSQL_DATABASE: ${MIRTH_DB_NAME:-mirthdb}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
+      MYSQL_USER: ${MIRTH_DB_USER:-mirthconnect}
+      MYSQL_PASSWORD: "${MIRTH_DB_PASSWORD:-example}"
+      TZ: "${TZ:-Europe/London}"
+    stdin_open: true
+    tty: true
+    volumes:
+      - "oe-db:/var/lib/mysql"
+    command:
+      # Changing log_file_size to allow lightning image processing of larger document image events
+      - "--innodb_log_file_size"
+      - "128M"
+    networks:
+      - private
+  
+  web:
+    image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-latest}"
+    hostname: "{{.Task.Name}}_{{.Task.Slot}}"
+    environment:
+      TZ: "${TZ:-Europe/London}"
+      OE_MODE: '${OE_MODE:-DEV}'
+      OE_INSTITUTION_CODE: '${OE_INSTITUTION_CODE:-NEW}'
+      OE_PORTAL_URI: ${OE_PORTAL_URI:-}
+      OE_PORTAL_EXTERNAL_URI: ${OE_PORTAL_EXTERNAL_URI:-}
+      OE_PORTAL_USERNAME: ${OE_PORTAL_USERNAME:-}
+      OE_PORTAL_PASSWORD: ${OE_PORTAL_PASSWORD:-}
+      OE_PORTAL_CLIENT_ID: ${OE_PORTAL_USERNAME:-}
+      OE_PORTAL_CLIENT_SECRET: ${OE_PORTAL_CLIENT_SECRET:-}
+      OE_PORTAL_ENABLED: "${OE_PORTAL_ENABLED:-FALSE}"
+      SSH_SERVER_ENABLE: "${SSH_SERVER_ENABLE:-FALSE}"
+      DATABASE_HOST: "db"
+      DATABASE_PASS: ${DATABASE_PASS:-openeyes}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
+      ENABLE_CRON: "${ENABLE_CRON:-TRUE}"
+      WAIT_HOSTS_TIMEOUT: "120"
+      WAIT_SLEEP_INTERVAL: "3"
+      BUILD_BRANCH: '${BUILD_BRANCH:-master}'
+      OE_TECH_SUPPORT_PROVIDER: '${OE_TECH_SUPPORT_PROVIDER:-Toukan Labs}'
+      OE_TECH_SUPPORT_URL: '${OE_TECH_SUPPORT_URL:-https://toukanlabs.com}'
+      OE_SIGNATURE_APP_URL: ${OE_SIGNATURE_APP_URL:-}
+      OE_DOCMAN_EXPORT_DIRECTORY: ${OE_DOCMAN_EXPORT_DIRECTORY:-}
+      RESET_DB_CRON: ${RESET_DB_CRON:-}
+      USE_DEMO_DATA: ${USE_DEMO_DATA:-TRUE}
+      TRACK_NEW_GIT_COMMITS: ${TRACK_NEW_GIT_COMMITS:-FALSE}
+      OE_PASAPI_ENABLE: ${OE_PASAPI_ENABLE:-TRUE}
+      OE_HOS_NUM_REGEX: ${OE_HOS_NUM_REGEX:-}
+      OE_TRAINING_MODE: ${OE_TRAINING_MODE:-} 
+      OE_USER_BANNER_SHORT: ${OE_USER_BANNER_SHORT:-}
+      OE_USER_BANNER_LONG: ${OE_USER_BANNER_LONG:-}
+      GENERATE_TEMP_SODIUM_CRYPTO_KEY: "TRUE"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=80"
+        - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
+        - "traefik.http.routers.${URL_HOST}.tls=true"
+        - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
+    networks:
+      - proxy
+      - private
+    secrets:
+      - source: ssh_deploy_key
+        target: SSH_PRIVATE_KEY
+    stdin_open: true
+    tty: true
+    volumes:
+      - "oe-web:/var/www/openeyes"
+    depends_on:
+     - "db"
+
+  mc:
+    image: nextgenhealthcare/connect:${MIRTH_IMAGE_TAG:-3.9}
+    environment:
+      TZ: "${TZ:-Europe/London}"
+      DATABASE: mysql
+      DATABASE_URL: jdbc:mysql://db:3306/${MIRTH_DB_NAME:-mirthdb}
+      DATABASE_MAX_CONNECTIONS: 150
+      DATABASE_USERNAME: ${MIRTH_DB_USER:-mirthconnect}
+      DATABASE_PASSWORD: "${MIRTH_DB_PASSWORD:-example}"
+      VMOPTIONS: -Xmx512m
+      SESSION_STORE: "TRUE"
+    volumes:
+      - connect-appdata:/opt/connect/appdata
+      - iolmaster_incomming:/mnt/dicom
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=80"
+        - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
+        - "traefik.http.routers.${URL_HOST}.tls=true"
+      #  - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
+    ports:
+      - published: 8080
+        target: 8080
+        protocol: tcp
+        mode: host
+      - published: 8443
+        target: 8443
+        protocol: tcp
+        mode: host
+      - published: 4200
+        target: 4200
+        protocol: tcp
+        mode: host
+      - published: 2575
+        target: 2575
+        protocol: tcp
+        mode: host
+      - published: 11111
+        target: 11111
+        protocol: tcp
+        mode: host
+      - published: 11112
+        target: 11112
+        protocol: tcp
+        mode: host
+      - published: 11113
+        target: 11113
+        protocol: tcp
+        mode: host
+      - published: 11114
+        target: 11114
+        protocol: tcp
+        mode: host
+      - published: 11115
+        target: 11115
+        protocol: tcp
+        mode: host
+      - published: 4200
+        target: 4200
+        protocol: udp
+        mode: host
+      - published: 2575
+        target: 2575
+        protocol: udp
+        mode: host
+      - published: 11111
+        target: 11111
+        protocol: udp
+        mode: host
+      - published: 11112
+        target: 11112
+        protocol: udp
+        mode: host
+      - published: 11113
+        target: 11113
+        protocol: udp
+        mode: host
+      - published: 11114
+        target: 11114
+        protocol: udp 
+        mode: host
+      - published: 11115
+        target: 11115
+        protocol: udp
+        mode: host
+    depends_on:
+      - db
+      - web
+    networks:
+      - proxy
+      - private
+
+  payload_proc:
+    image: appertaopeneyes/payloadprocessor:${PAYLOAD_IMAGE_TAG:-latest}
+    environment:
+      TZ: "${TZ:-Europe/London}"
+      DATABASE_HOST: db
+      API_HOST: web 
+      API_PORT: 80
+      API_USER: "${PAYLOAD_API_USER?:Must specify a user account for PAYLOAD_API_USER}"
+      WAIT_HOSTS: web:80
+      WAIT_HOSTS_TIMEOUT: 700
+      WAIT_SLEEP_INTERVAL: 3
+      DATABASE_USER: "${DATABASE_USER:-openeyes}"
+      API_DO_HTTPS: "FALSE"
+      HOSPITAL_NUMBER_CONSTRUCT_REGEX: "((?=^[0-9]{8}$$)^0{2}([0-9]*$$)|(?!^[0-9]{8}$$)([0-9]*))"
+      DEFAULT_SUBSPECIALTY: "Eye Casualty"
+      DEFAULT_SERVICE: "Eye Casualty Service"
+      DEFAULT_FIRM_NAME: "Eye Casualty Service"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - db
+      - web
+    networks:
+      - private
+    secrets:
+      - DATABASE_PASS
+      - API_PASSWORD
+
+  iolm:
+    image: ${IOLMASTERIMPORT_IMAGE:-toukanlabsdocker/iolmasterimport:latest}
+    volumes: 
+      - "iolmaster_incomming:/incomming"
+    environment:
+      FHIR_API_HOST: 'localhost'
+      FHIR_API_PORT: '80'
+      FHIR_API_USER: 'admin' 
+      DATABASE_HOST: "db"
+      WAIT_HOSTS: web:80
+      WAIT_HOSTS_TIMEOUT: 700
+      DATABASE_USER: ${DATABASE_USER:-openeyes}
+    depends_on:
+      - db
+    secrets:
+      - source: API_PASSWORD
+        target: FHIR_API_PASSWORD
+      - DATABASE_PASS
+    networks:
+      - private
+
+
+networks:
+  private:
+  public:
+  #  external: true
+
+
+volumes:
+  oe-web:
+  oe-db:
+  connect-appdata:
+  iolmaster_incomming:
+
+secrets:
+  ssh_deploy_key:
+    external: true

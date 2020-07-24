@@ -25,7 +25,6 @@ services:
     image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-php7}"
     hostname: "{{.Task.Name}}_{{.Task.Slot}}"
     environment:
-      GIT_USER: ${GIT_USER:-}
       TZ: "${TZ:-Europe/London}"
       OE_MODE: '${OE_MODE:-DEV}'
       OE_INSTITUTION_CODE: '${OE_INSTITUTION_CODE:-NEW}'
@@ -42,7 +41,7 @@ services:
       ENABLE_CRON: "${ENABLE_CRON:-TRUE}"
       WAIT_HOSTS_TIMEOUT: "120"
       WAIT_SLEEP_INTERVAL: "2"
-      BUILD_BRANCH: '${BUILD_BRANCH:-develop}'
+      BUILD_BRANCH: '${BUILD_BRANCH:-master}'
       OE_TECH_SUPPORT_PROVIDER: '${OE_TECH_SUPPORT_PROVIDER:-Toukan Labs}'
       OE_TECH_SUPPORT_URL: '${OE_TECH_SUPPORT_URL:-https://toukanlabs.com}'
       OE_SIGNATURE_APP_URL: ${OE_SIGNATURE_APP_URL:-}
@@ -54,6 +53,7 @@ services:
       OE_TRAINING_MODE: ${OE_TRAINING_MODE:-} 
       OE_USER_BANNER_SHORT: ${OE_USER_BANNER_SHORT:-}
       OE_USER_BANNER_LONG: ${OE_USER_BANNER_LONG:-}
+      GENERATE_TEMP_SODIUM_CRYPTO_KEY: "TRUE"
     deploy:
       labels:
         - "traefik.enable=true"
@@ -61,7 +61,7 @@ services:
         - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
         - "traefik.http.routers.${URL_HOST}.tls=true"
-        - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
+      #  - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
     networks:
       - proxy
       - private
