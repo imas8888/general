@@ -108,7 +108,7 @@ services:
         - "traefik.tcp.services.${URL_HOST}-hl7.loadbalancer.server.port=2575"
         - "traefik.tcp.routers.${URL_HOST}-hl7.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.tcp.routers.${URL_HOST}-hl7.service=${URL_HOST}-hl7"
-        - "traefik.tcp.routers.${URL_HOST}.entrypoints=hl7"
+        - "traefik.tcp.routers.${URL_HOST}-hl7.entrypoints=hl7"
         - "traefik.tcp.services.${URL_HOST}-4200.loadbalancer.server.port=4200"
         - "traefik.tcp.routers.${URL_HOST}-4200.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.tcp.routers.${URL_HOST}-4200.service=${URL_HOST}-4200"
