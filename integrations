@@ -95,71 +95,26 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=8080"
-        - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
-        - "traefik.http.routers.${URL_HOST}.entrypoints=mirth"
-        - "traefik.http.routers.${URL_HOST}.tls=false"
-        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=8443"
-        - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
-        - "traefik.http.routers.${URL_HOST}.entrypoints=mirthsecure"
-        #- "traefik.http.routers.${URL_HOST}.tls=true"
-    ports:
-      - published: 4200
-        target: 4200
-        protocol: tcp
-        mode: host
-      - published: 2575
-        target: 2575
-        protocol: tcp
-        mode: host
-      - published: 11111
-        target: 11111
-        protocol: tcp
-        mode: host
-      - published: 11112
-        target: 11112
-        protocol: tcp
-        mode: host
-      - published: 11113
-        target: 11113
-        protocol: tcp
-        mode: host
-      - published: 11114
-        target: 11114
-        protocol: tcp
-        mode: host
-      - published: 11115
-        target: 11115
-        protocol: tcp
-        mode: host
-      - published: 4200
-        target: 4200
-        protocol: udp
-        mode: host
-      - published: 2575
-        target: 2575
-        protocol: udp
-        mode: host
-      - published: 11111
-        target: 11111
-        protocol: udp
-        mode: host
-      - published: 11112
-        target: 11112
-        protocol: udp
-        mode: host
-      - published: 11113
-        target: 11113
-        protocol: udp
-        mode: host
-      - published: 11114
-        target: 11114
-        protocol: udp 
-        mode: host
-      - published: 11115
-        target: 11115
-        protocol: udp
-        mode: host
+        - "traefik.http.services.${URL_HOST}-mirth.loadbalancer.server.port=8080"
+        - "traefik.http.routers.${URL_HOST}-mirth.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.http.routers.${URL_HOST}-mirth.entrypoints=mirth"
+        - "traefik.http.routers.${URL_HOST}-mirth.tls=false"
+        - "traefik.http.services.${URL_HOST}-mirthsecure.loadbalancer.server.port=8443"
+        - "traefik.http.routers.${URL_HOST}-mirthsecure.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.http.routers.${URL_HOST}-mirthsecure.entrypoints=mirthsecure"
+        - "traefik.tcp.services.${URL_HOST}-hl7.loadbalancer.server.port=2575"
+        - "traefik.http.routers.${URL_HOST}-hl7.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-hl7.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}.entrypoints=hl7"
+        - "traefik.tcp.services.${URL_HOST}-4200.loadbalancer.server.port=4200"
+        - "traefik.http.routers.${URL_HOST}-4200.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-4200.entrypoints=4200"
+        - "traefik.tcp.services.${URL_HOST}-11111.loadbalancer.server.port=11111"
+        - "traefik.http.routers.${URL_HOST}-11111.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-11111.entrypoints=11111"
+        - "traefik.tcp.services.${URL_HOST}-11112.loadbalancer.server.port=11112"
+        - "traefik.http.routers.${URL_HOST}-11112.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-11112.entrypoints=11112"
     depends_on:
       - db
       - web
@@ -175,12 +130,14 @@ services:
       API_HOST: web 
       API_PORT: 80
       API_USER: "${PAYLOAD_API_USER?:Must specify a user account for PAYLOAD_API_USER}"
+      API_PASSWORD: "${PAYLOAD_API_PASSWORD:-}"
       WAIT_HOSTS: web:80
       WAIT_HOSTS_TIMEOUT: 700
       WAIT_SLEEP_INTERVAL: 3
       DATABASE_USER: "${DATABASE_USER:-openeyes}"
+      DATABASE_PASS: "${DATABASE_PASS:-openeyes}"
       API_DO_HTTPS: "FALSE"
-      HOSPITAL_NUMBER_CONSTRUCT_REGEX: "((?=^[0-9]{8}$$)^0{2}([0-9]*$$)|(?!^[0-9]{8}$$)([0-9]*))"
+      #HOSPITAL_NUMBER_CONSTRUCT_REGEX: "((?=^[0-9]{8}$$)^0{2}([0-9]*$$)|(?!^[0-9]{8}$$)([0-9]*))"
       DEFAULT_SUBSPECIALTY: "Eye Casualty"
       DEFAULT_SERVICE: "Eye Casualty Service"
       DEFAULT_FIRM_NAME: "Eye Casualty Service"
@@ -191,37 +148,29 @@ services:
       - web
     networks:
       - private
-    secrets:
-      - DATABASE_PASS
-      - API_PASSWORD
 
   iolm:
     image: ${IOLMASTERIMPORT_IMAGE:-toukanlabsdocker/iolmasterimport:latest}
     volumes: 
       - "iolmaster_incomming:/incomming"
     environment:
-      FHIR_API_HOST: 'localhost'
+      FHIR_API_HOST: 'web'
       FHIR_API_PORT: '80'
-      FHIR_API_USER: 'admin' 
+      FHIR_API_USER: "${PAYLOAD_API_USER}"
+      FHIR_API_PASSWORD: "${PAYLOAD_API_PASSWORD:-}"
       DATABASE_HOST: "db"
       WAIT_HOSTS: web:80
       WAIT_HOSTS_TIMEOUT: 700
       DATABASE_USER: ${DATABASE_USER:-openeyes}
+      DATABASE_PASS: "${DATABASE_PASS:-openeyes}"
     depends_on:
       - db
-    secrets:
-      - source: API_PASSWORD
-        target: FHIR_API_PASSWORD
-      - DATABASE_PASS
     networks:
       - private
 
 
 networks:
   private:
-  public:
-  #  external: true
-
 
 volumes:
   oe-web:
