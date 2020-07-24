@@ -95,20 +95,15 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=80"
+        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=8080"
         - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
-        - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
-        - "traefik.http.routers.${URL_HOST}.tls=true"
-      #  - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.${URL_HOST}.entrypoints=mirth"
+        - "traefik.http.routers.${URL_HOST}.tls=false"
+        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=8443"
+        - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.http.routers.${URL_HOST}.entrypoints=mirthsecure"
+        #- "traefik.http.routers.${URL_HOST}.tls=true"
     ports:
-      - published: 8080
-        target: 8080
-        protocol: tcp
-        mode: host
-      - published: 8443
-        target: 8443
-        protocol: tcp
-        mode: host
       - published: 4200
         target: 4200
         protocol: tcp
