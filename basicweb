@@ -53,13 +53,13 @@ services:
       USE_DEMO_DATA: ${USE_DEMO_DATA:-TRUE}
       TRACK_NEW_GIT_COMMITS: ${TRACK_NEW_GIT_COMMITS:-FALSE}
     deploy:
-      labels: 
-        - traefik.enable=true
-        - traefik.http.services.${URL_HOST}.loadbalancer.server.port=80          
-        - traefik.http.routers.${URL_HOST}.rule=Host(`portainer.${DOMAINNAME}`)
-        - traefik.http.routers.${URL_HOST}.entrypoints=websecure
-        - traefik.http.routers.${URL_HOST}.tls=true
-        - traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.${URL_HOST}.loadbalancer.server.port=80"
+        - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
+        - "traefik.http.routers.${URL_HOST}.tls=true"
+        - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
     networks:
       - proxy
       - private
