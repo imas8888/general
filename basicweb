@@ -80,7 +80,7 @@ services:
       - source: ssh_deploy_key
         target: SSH_PRIVATE_KEY
       - source: ssh_authorized_keys
-      target: SSH_AUTHORIZED_KEYS
+        target: SSH_AUTHORIZED_KEYS
     stdin_open: true
     tty: true
     volumes:
