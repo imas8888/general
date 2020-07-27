@@ -18,8 +18,15 @@ services:
       - "--innodb_log_file_size"
       - "128M"
     networks:
-    # - public
-    - private
+      - private
+    deploy:
+      replicas: 1
+      ## The following could be used to directly expose the database connection externally, but this isn't advised
+      # labels:
+      #   - "traefik.tcp.services.${URL_HOST}-db.loadbalancer.server.port=3306"
+      #   - "traefik.tcp.routers.${URL_HOST}-db.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+      #   - "traefik.tcp.routers.${URL_HOST}-db.service=${URL_HOST}-db"
+      #   - "traefik.tcp.routers.${URL_HOST}-db.entrypoints=mysql"
 
   web:
     image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-php7}"

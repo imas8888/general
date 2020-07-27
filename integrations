@@ -21,6 +21,14 @@ services:
       - "128M"
     networks:
       - private
+    deploy:
+      replicas: 1
+      ## The following could be used to directly expose the database connection externally, but this isn't advised
+      # labels:
+      #   - "traefik.tcp.services.${URL_HOST}-db.loadbalancer.server.port=3306"
+      #   - "traefik.tcp.routers.${URL_HOST}-db.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+      #   - "traefik.tcp.routers.${URL_HOST}-db.service=${URL_HOST}-db"
+      #   - "traefik.tcp.routers.${URL_HOST}-db.entrypoints=mysql"
   
   web:
     image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-latest}"
@@ -59,19 +67,25 @@ services:
       GENERATE_TEMP_SODIUM_CRYPTO_KEY: "TRUE"
     deploy:
       labels:
+        # Web service
         - "traefik.enable=true"
         - "traefik.http.services.${URL_HOST?:Must set the URL_HOST}.loadbalancer.server.port=80"
         - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.http.routers.${URL_HOST}.service=${URL_HOST}"
         - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
-        - "traefik.http.routers.${URL_HOST}.tls=true"
-        - "traefik.http.routers.${URL_HOST}.tls.certresolver=letsencryptresolver"
+        # SSH
+        - "traefik.tcp.services.${URL_HOST}-ssh.loadbalancer.server.port=22"
+        - "traefik.tcp.routers.${URL_HOST}-ssh.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-ssh.service=${URL_HOST}-ssh"
+        - "traefik.tcp.routers.${URL_HOST}-ssh.entrypoints=ssh"
     networks:
       - proxy
       - private
     secrets:
       - source: ssh_deploy_key
         target: SSH_PRIVATE_KEY
+      - source: ssh_authorized_keys
+        target: SSH_AUTHORIZED_KEYS
     stdin_open: true
     tty: true
     volumes:
@@ -96,31 +110,64 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
+        # mirth frontend
         - "traefik.http.services.${URL_HOST}-mirth.loadbalancer.server.port=8080"
         - "traefik.http.routers.${URL_HOST}-mirth.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.http.routers.${URL_HOST}-mirth.service=${URL_HOST}-mirth"
         - "traefik.http.routers.${URL_HOST}-mirth.entrypoints=mirth"
-        - "traefik.http.routers.${URL_HOST}-mirth.tls=false"
+        # mirth secure client access
         - "traefik.http.services.${URL_HOST}-mirthsecure.loadbalancer.server.port=8443"
+        - "traefik.http.services.${URL_HOST}-mirthsecure.loadbalancer.server.scheme=https"
+        - "traefik.http.services.${URL_HOST}-mirthsecure.loadbalancer.responseforwarding.flushinterval=1"
         - "traefik.http.routers.${URL_HOST}-mirthsecure.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.http.routers.${URL_HOST}-mirthsecure.service=${URL_HOST}-mirthsecure"
         - "traefik.http.routers.${URL_HOST}-mirthsecure.entrypoints=mirthsecure"
+        # hl7 traffic (Port 2575)
         - "traefik.tcp.services.${URL_HOST}-hl7.loadbalancer.server.port=2575"
         - "traefik.tcp.routers.${URL_HOST}-hl7.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.tcp.routers.${URL_HOST}-hl7.service=${URL_HOST}-hl7"
         - "traefik.tcp.routers.${URL_HOST}-hl7.entrypoints=hl7"
+        # Port 4200 for PAS API
         - "traefik.tcp.services.${URL_HOST}-4200.loadbalancer.server.port=4200"
         - "traefik.tcp.routers.${URL_HOST}-4200.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.tcp.routers.${URL_HOST}-4200.service=${URL_HOST}-4200"
         - "traefik.tcp.routers.${URL_HOST}-4200.entrypoints=4200"
+        # Port 11111
         - "traefik.tcp.services.${URL_HOST}-11111.loadbalancer.server.port=11111"
         - "traefik.tcp.routers.${URL_HOST}-11111.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.tcp.routers.${URL_HOST}-11111.service=${URL_HOST}-11111"
         - "traefik.tcp.routers.${URL_HOST}-11111.entrypoints=11111"
+        # dicom - no encryption (Port 11112)
         - "traefik.tcp.services.${URL_HOST}-11112.loadbalancer.server.port=11112"
         - "traefik.tcp.routers.${URL_HOST}-11112.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.tcp.routers.${URL_HOST}-11112.service=${URL_HOST}-11112"
-        - "traefik.tcp.routers.${URL_HOST}-11112.entrypoints=11112"
+        - "traefik.tcp.routers.${URL_HOST}-11112.entrypoints=dicom"
+        # Port 11113
+        - "traefik.tcp.services.${URL_HOST}-11113.loadbalancer.server.port=11113"
+        - "traefik.tcp.routers.${URL_HOST}-11113.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-11113.service=${URL_HOST}-11113"
+        - "traefik.tcp.routers.${URL_HOST}-11113.entrypoints=11113"
+        # Port 11114
+        - "traefik.tcp.services.${URL_HOST}-11114.loadbalancer.server.port=11114"
+        - "traefik.tcp.routers.${URL_HOST}-11114.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-11114.service=${URL_HOST}-11114"
+        - "traefik.tcp.routers.${URL_HOST}-11114.entrypoints=11114"
+        # Port 11115
+        - "traefik.tcp.services.${URL_HOST}-11115.loadbalancer.server.port=11115"
+        - "traefik.tcp.routers.${URL_HOST}-11115.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-11115.service=${URL_HOST}-11115"
+        - "traefik.tcp.routers.${URL_HOST}-11115.entrypoints=11115"
+        # dicom Integrated Secure Communication Layer (Port 2761)
+        - "traefik.tcp.services.${URL_HOST}-dicomISCL.loadbalancer.server.port=2761"
+        - "traefik.tcp.routers.${URL_HOST}-dicomISCL.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-dicomISCL.service=${URL_HOST}-dicomISCL"
+        - "traefik.tcp.routers.${URL_HOST}-dicomISCL.entrypoints=dicomISCL"
+        # dicom TLS encryption (Port 2762)
+        - "traefik.tcp.services.${URL_HOST}-dicomTLS.loadbalancer.server.port=2762"
+        - "traefik.tcp.routers.${URL_HOST}-dicomTLS.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-dicomTLS.service=${URL_HOST}-dicomTLS"
+        - "traefik.tcp.routers.${URL_HOST}-dicomTLS.entrypoints=dicomTLS"
+        - "traefik.tcp.routers.${URL_HOST}-dicomTLS.tls"
     depends_on:
       - db
       - web
@@ -188,4 +235,6 @@ volumes:
 
 secrets:
   ssh_deploy_key:
+    external: true
+  ssh_authorized_keys:
     external: true
