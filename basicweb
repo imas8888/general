@@ -67,12 +67,19 @@ services:
         - "traefik.http.services.${URL_HOST?:Must set the URL_HOST}.loadbalancer.server.port=80"
         - "traefik.http.routers.${URL_HOST}.rule=Host(`${URL_HOST}.${DOMAINNAME}`)"
         - "traefik.http.routers.${URL_HOST}.entrypoints=websecure"
+        # SSH
+        - "traefik.tcp.services.${URL_HOST}-ssh.loadbalancer.server.port=22"
+        - "traefik.tcp.routers.${URL_HOST}-ssh.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
+        - "traefik.tcp.routers.${URL_HOST}-ssh.service=${URL_HOST}-ssh"
+        - "traefik.tcp.routers.${URL_HOST}-ssh.entrypoints=ssh"
     networks:
       - proxy
       - private
     secrets:
       - source: ssh_deploy_key
         target: SSH_PRIVATE_KEY
+      - source: ssh_authorized_keys
+      target: SSH_AUTHORIZED_KEYS
     stdin_open: true
     tty: true
     volumes:
@@ -92,4 +99,6 @@ volumes:
 
 secrets:
   ssh_deploy_key:
+    external: true
+  ssh_authorized_keys:
     external: true
