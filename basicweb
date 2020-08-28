@@ -33,6 +33,8 @@ services:
     hostname: "{{.Task.Name}}_{{.Task.Slot}}"
     environment:
       TZ: "${TZ:-Europe/London}"
+      BASICAUTH_USER: "${BASICAUTH_USER}"
+      BASICAUTH_PASSWORD: "${BASICAUTH_PASSWORD}"
       OE_MODE: '${OE_MODE:-DEV}'
       OE_INSTITUTION_CODE: '${OE_INSTITUTION_CODE:-NEW}'
       OE_PORTAL_URI: ${OE_PORTAL_URI:-}
