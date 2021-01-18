@@ -29,7 +29,7 @@ services:
       #   - "traefik.tcp.routers.${URL_HOST}-db.entrypoints=mysql"
 
   web:
-    image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-php7}"
+    image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-latest}"
     hostname: "{{.Task.Name}}_{{.Task.Slot}}"
     environment:
       BASICAUTH_USER: "${BASICAUTH_USER}"
