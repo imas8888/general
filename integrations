@@ -101,6 +101,7 @@ services:
     tty: true
     volumes:
       - "oe-web:/var/www/openeyes"
+      - "oe-protected-files:/protected/files"
     depends_on:
      - "db"
 
@@ -241,6 +242,7 @@ networks:
 volumes:
   oe-web:
   oe-db:
+  oe-protected-files:
   connect-appdata:
   iolmaster_incomming:
 
