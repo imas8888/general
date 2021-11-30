@@ -118,7 +118,7 @@ services:
       SESSION_STORE: "TRUE"
     volumes:
       - connect-appdata:/opt/connect/appdata
-      - iolmaster_incomming:/mnt/dicom
+      - iolmaster_incoming:/mnt/dicom
     deploy:
       labels:
         - "traefik.enable=true"
@@ -217,13 +217,14 @@ services:
   iolm:
     image: ${IOLMASTERIMPORT_IMAGE:-toukanlabsdocker/iolmasterimport:latest}
     volumes: 
-      - "iolmaster_incomming:/incomming"
+      - "iolmaster_incoming:/incoming"
     environment:
       FHIR_API_HOST: 'web'
       FHIR_API_PORT: '80'
       FHIR_API_USER: "${PAYLOAD_API_USER}"
       FHIR_API_PASSWORD: "${PAYLOAD_API_PASSWORD:-}"
       DATABASE_HOST: "db"
+      INCOMING_FOLDER: "/incoming"
       WAIT_HOSTS: web:80
       WAIT_HOSTS_TIMEOUT: 700
       DATABASE_USER: ${DATABASE_USER:-openeyes}
@@ -244,7 +245,7 @@ volumes:
   oe-db:
   oe-protected-files:
   connect-appdata:
-  iolmaster_incomming:
+  iolmaster_incoming:
 
 secrets:
   ssh_deploy_key:
