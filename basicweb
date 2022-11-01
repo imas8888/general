@@ -9,6 +9,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
       TZ: "${TZ:-Europe/London}"
+      MYSQL_USER: openeyes
+      MYSQL_PASSWORD: ${DATABASE_PASS:-"openeyes"}
     stdin_open: true
     tty: true
     volumes:
