@@ -7,7 +7,7 @@ services:
   db:
     image: "mariadb:${MARIADBVERSION:-10.4}"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-"Sup3rS3cure!"}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
       TZ: "${TZ:-Europe/London}"
     stdin_open: true
     tty: true
@@ -38,7 +38,7 @@ services:
       DATABASE_PASS: ${DATABASE_PASS:-"openeyes"}
       GENERATE_TEMP_SODIUM_CRYPTO_KEY: "TRUE"
       LOG_TO_BROWSER: ${LOG_TO_BROWSER:-FALSE}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-"Sup3rS3cure!"}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
       OE_DOCMAN_EXPORT_DIRECTORY: ${OE_DOCMAN_EXPORT_DIRECTORY:-}
       OE_INSTITUTION_CODE: "${OE_INSTITUTION_CODE:-NEW}"
       OE_LOCAL_USERS: "admin, api, docman_user"
@@ -98,7 +98,7 @@ services:
       ENABLE_CRON: "TRUE"
       GENERATE_TEMP_SODIUM_CRYPTO_KEY: "TRUE"
       LOG_TO_BROWSER: ${LOG_TO_BROWSER:-FALSE}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-"Sup3rS3cure!"}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
       OE_DOCMAN_EXPORT_DIRECTORY: ${OE_DOCMAN_EXPORT_DIRECTORY:-}
       OE_INSTITUTION_CODE: "${OE_INSTITUTION_CODE:-NEW}"
       OE_LOCAL_USERS: "admin, api, docman_user"
