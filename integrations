@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 ## !!!!!!! login to docker first. If using stack deploy, include --with-registry-auth !!!!!!!!
 
@@ -29,53 +29,47 @@ services:
       #   - "traefik.tcp.routers.${URL_HOST}-db.rule=HostSNI(`${URL_HOST}.${DOMAINNAME}`)"
       #   - "traefik.tcp.routers.${URL_HOST}-db.service=${URL_HOST}-db"
       #   - "traefik.tcp.routers.${URL_HOST}-db.entrypoints=mysql"
-  
+
   web:
-    image: "${WEBIMAGE:-toukanlabsdocker/oe-docker}:${WEBIMAGETAG:-latest}"
+    image: "${WEBIMAGE:-toukanlabsdocker/oe-web-live}:${WEBTAGPREFIX:-''}${TAG:-latest}${WEBTAGSUFFIX:-''}"
     hostname: "{{.Task.Name}}_{{.Task.Slot}}"
     environment:
-      BASICAUTH_USER: "${BASICAUTH_USER}"
-      BASICAUTH_PASSWORD: "${BASICAUTH_PASSWORD}"
-      BUILD_BRANCH: '${BUILD_BRANCH:-master}'
-      DATABASE_HOST: "db"
-      DATABASE_PASS: ${DATABASE_PASS:-openeyes}
-      ENABLE_CRON: "${ENABLE_CRON:-TRUE}"
-      GENERATE_TEMP_SODIUM_CRYPTO_KEY: "TRUE"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-example}
-      OE_DEFAULT_BRANCH: ${OE_DEFAULT_BRANCH:-}
+      DATABASE_HOST: db
+      BASICAUTH_PASSWORD: ${BASICAUTH_PASSWORD}
+      BASICAUTH_USER: ${BASICAUTH_USER}
+      DATABASE_PASS: ${DATABASE_PASS:-"openeyes"}
+      ENABLE_CRON: TRUE
+      LOG_TO_BROWSER: ${LOG_TO_BROWSER:-FALSE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-"Sup3rS3cure!"}
       OE_DOCMAN_EXPORT_DIRECTORY: ${OE_DOCMAN_EXPORT_DIRECTORY:-}
-      OE_HOS_NUM_REGEX: ${OE_HOS_NUM_REGEX:-}
-      OE_INSTITUTION_CODE: '${OE_INSTITUTION_CODE:-NEW}'
-      OE_MODE: '${OE_MODE:-DEV}'
-      OE_PASAPI_ENABLE: ${OE_PASAPI_ENABLE:-TRUE}
+      OE_INSTITUTION_CODE: "${OE_INSTITUTION_CODE:-NEW}"
+      OE_LOCAL_USERS: "admin, api, docman_user"
+      OE_MODE: "${OE_MODE:-LIVE}"
       OE_PORTAL_CLIENT_ID: ${OE_PORTAL_USERNAME:-}
       OE_PORTAL_CLIENT_SECRET: ${OE_PORTAL_CLIENT_SECRET:-}
       OE_PORTAL_ENABLED: "${OE_PORTAL_ENABLED:-FALSE}"
       OE_PORTAL_EXTERNAL_URI: ${OE_PORTAL_EXTERNAL_URI:-}
       OE_PORTAL_PASSWORD: ${OE_PORTAL_PASSWORD:-}
-      OE_PORTAL_USERNAME: ${OE_PORTAL_USERNAME:-}
       OE_PORTAL_URI: ${OE_PORTAL_URI:-}
-      OE_SIGNATURE_APP_URL: ${OE_SIGNATURE_APP_URL:-}
-      OE_TECH_SUPPORT_PROVIDER: '${OE_TECH_SUPPORT_PROVIDER:-Toukan Labs}'
-      OE_TECH_SUPPORT_URL: '${OE_TECH_SUPPORT_URL:-https://toukanlabs.com}'
+      OE_PORTAL_USERNAME: ${OE_PORTAL_USERNAME:-}
+      OE_SIGNATURE_APP_URL: ${OE_SIGNATURE_APP_URL:-"https://dev.oesign.uk"}
+      OE_SPECIAL_USERS: "api, docman_user"
+      OE_TECH_SUPPORT_PROVIDER: "${OE_TECH_SUPPORT_PROVIDER:-Toukan Labs}"
+      OE_TECH_SUPPORT_URL: "${OE_TECH_SUPPORT_URL:-https://toukanlabs.com}"
+      OE_TRAINING_HUB_TEXT: ${OE_TRAINING_HUB_TEXT:-}
+      OE_TRAINING_HUB_URL: ${OE_TRAINING_HUB_URL:-}
       OE_TRAINING_MODE: ${OE_TRAINING_MODE:-}
-      OE_USER_BANNER_LONG: ${OE_USER_BANNER_LONG:-}
       OE_USER_BANNER_SHORT: ${OE_USER_BANNER_SHORT:-}
-      PHPI_ERROR_REPORTING: "${PHPI_ERROR_REPORTING:-E_ALL}"
-      PW_ALLOW_CHANGE: ${PW_ALLOW_CHANGE}
+      PHPI_ERROR_REPORTING: ${PHPI_ERROR_REPORTING:-"E_ALL"}
+      PW_ALLOW_CHANGE: ${PW_ALLOW_CHANGE:-"false"}
       PW_RES_MIN_LEN: ${PW_RES_MIN_LEN}
-      PW_RES_STRENGTH: ${PW_RES_STRENGTH}
-      PW_STAT_ADMIN_CHANGE: ${PW_STAT_ADMIN_CHANGE}
-      PW_STAT_DAYS_EXPIRE: ${PW_STAT_DAYS_EXPIRE}
-      PW_STAT_DAYS_LOCK: ${PW_STAT_DAYS_LOCK}
-      PW_STAT_DAYS_STALE: ${PW_STAT_DAYS_STALE}
+      PW_RES_STRENGTH: ${PW_RES_STRENGTH:-"%^.*$%"}
+      PW_STAT_DAYS_STALE: ${PW_STAT_DAYS_STALE:-"0"}
       RESET_DB_CRON: ${RESET_DB_CRON:-}
-      SSH_SERVER_ENABLE: "${SSH_SERVER_ENABLE:-FALSE}"
-      TRACK_NEW_GIT_COMMITS: ${TRACK_NEW_GIT_COMMITS:-FALSE}
       TZ: "${TZ:-Europe/London}"
       USE_DEMO_DATA: ${USE_DEMO_DATA:-TRUE}
       WAIT_HOSTS_TIMEOUT: "120"
-      WAIT_SLEEP_INTERVAL: "3"
+      WAIT_SLEEP_INTERVAL: "2"
     deploy:
       labels:
         # Web service
@@ -92,21 +86,15 @@ services:
     networks:
       - proxy
       - private
-    secrets:
-      - source: ssh_deploy_key
-        target: SSH_PRIVATE_KEY
-      - source: ssh_authorized_keys
-        target: SSH_AUTHORIZED_KEYS
     stdin_open: true
     tty: true
     volumes:
-      - "oe-web:/var/www/openeyes"
       - "oe-protected-files:/protected/files"
     depends_on:
-     - "db"
+      - "db"
 
   mc:
-    image: nextgenhealthcare/connect:${MIRTH_IMAGE_TAG:-3.9}
+    image: toukanlabsdocker/connect:${MIRTH_IMAGE_TAG:-3.11}
     environment:
       TZ: "${TZ:-Europe/London}"
       DATABASE: mysql
@@ -188,11 +176,11 @@ services:
       - private
 
   payload_proc:
-    image: appertaopeneyes/payloadprocessor:${PAYLOAD_IMAGE_TAG:-latest}
+    image: toukanlabsdocker/payloadprocessor:${TAG:-latest}
     environment:
       TZ: "${TZ:-Europe/London}"
       DATABASE_HOST: db
-      API_HOST: web 
+      API_HOST: web
       API_PORT: 80
       API_USER: "${PAYLOAD_API_USER?:Must specify a user account for PAYLOAD_API_USER}"
       API_PASSWORD: "${PAYLOAD_API_PASSWORD:-}"
@@ -215,12 +203,12 @@ services:
       - private
 
   iolm:
-    image: ${IOLMASTERIMPORT_IMAGE:-toukanlabsdocker/iolmasterimport:latest}
-    volumes: 
+    image: toukanlabsdocker/iolmasterimport:${TAG:-latest}
+    volumes:
       - "iolmaster_incoming:/incoming"
     environment:
-      FHIR_API_HOST: 'web'
-      FHIR_API_PORT: '80'
+      FHIR_API_HOST: "web"
+      FHIR_API_PORT: "80"
       FHIR_API_USER: "${PAYLOAD_API_USER}"
       FHIR_API_PASSWORD: "${PAYLOAD_API_PASSWORD:-}"
       DATABASE_HOST: "db"
@@ -234,21 +222,13 @@ services:
     networks:
       - private
 
-
 networks:
   private:
   proxy:
-      external: true
+    external: true
 
 volumes:
-  oe-web:
   oe-db:
   oe-protected-files:
   connect-appdata:
   iolmaster_incoming:
-
-secrets:
-  ssh_deploy_key:
-    external: true
-  ssh_authorized_keys:
-    external: true
